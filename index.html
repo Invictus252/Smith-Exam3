@@ -1,0 +1,192 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">        
+        
+        <style>
+            .bold
+            {
+                font-weight: bold;
+                color: blue;
+            }        
+            .error
+            {
+                border: 1px red solid;
+            }
+            .errorTxt
+            {
+                color: red;
+            }
+            .selected
+            {
+                color: red;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="container">
+            
+            <!--form...-->
+            <h4>Paint Jobs</h4>
+            <form class="border border-primary p-3">
+                <div class="form-group">
+                    <label for="firstName">Job Description</label>
+                    <input type="text" class="form-control jobData" id="jobDesc" name="jobDesc" placeholder="Job Description">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Sq Ft</label>
+                    <input type="number" class="form-control jobData" id="sqFt" name="sqFt" placeholder="Square Feet">
+                </div>
+                <button id='btnSubmit' type="button" class="btn btn-primary float-right">Add Job</button>
+                <div class="clearfix"></div>
+            </form> 
+            <p id="error" class="errorTxt"></p>
+            
+            <!--list group-->
+            <div class='p-2 bg-dark'>
+                <h5 class='text-light'>Jobs</h5>
+                <ul id='jobList' class="list-group">
+                </ul>            
+                <button id='btnDelete' type="button" class="btn btn-primary float-right">Delete</button>
+                <div class="clearfix"></div>
+            </div>
+            <h5 id="note" class='text-dark'></h5>
+        </div>
+        
+        
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>        
+        
+        <!--put your modal dialogs here...-->
+        <div id='confirm' class="modal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header bg-dark text-light">
+                <h5 class="modal-title">Are You Sure?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>Are you sure you want to delete this job?</p>
+              </div>
+              <div class="modal-footer">
+                <button id='yes' type="button" class="btn btn-primary">Delete</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>                
+        
+        <script>
+        /* global $ */
+        $(document).ready(function() 
+        {
+            // model ....
+            let model = {};
+
+            function initializeModel()
+            {
+                model.count = 0;
+                model.selected = -1;
+                model.jobs = [];
+                model.jobDescError = false;
+                model.sqFtError = false;
+            }
+            
+            // view...
+            function updateView()
+            {
+                $('#jobList').empty();                
+                for (var i in model.jobs) 
+                {
+                    let item = $("<li></li>");
+                    item.attr("id", model.jobs[i].id);
+                    item.addClass("list-group-item");
+                    item.addClass("job");
+                    item.html("<span class='bold'>Description:</span> " + model.jobs[i].desc + 
+                              "<span class='bold'>Square Feet:</span> " + model.jobs[i].sqFeet+
+                              "<span class='bold'>Cost:</span> " + model.jobs[i].cost);
+                    $('#jobList').append(item);
+                }
+                $("li[id='"+model.selected+"']").addClass("selected");
+                
+                $('.jobData').removeClass("error");
+                if (model.jobDescError == true)
+                {
+                     $('#jobDesc').addClass("error");
+                }
+                if (model.sqFtError == true)
+                {
+                     $('#sqFt').addClass("error");
+                }
+            }            
+            
+            // controller ...
+            $('#btnSubmit').click(function() 
+            {
+                let desc = $('#jobDesc').val().trim();
+                let sqFt = parseInt($('#sqFt').val(),10);
+                let jbCost = "$"+(Math.ceil(sqFt/100 )*10);
+                
+                model.jobDescError = false;
+                model.sqFtError = false;
+                if (desc == "")
+                {
+                   model.jobDescError = true;
+                   $('#error').text("Please enter a description and number of square feet.");
+                   
+                }
+                else if (isNaN(sqFt))
+                {
+                   model.sqFtError = true;
+                   $('#error').text("Please enter a description and number of square feet.");
+                   
+                }
+                else
+                {
+                    model.jobs.push({ id: model.count, desc: desc, sqFeet: sqFt, cost: jbCost });
+                    model.count = model.count+1;
+                    $('#note').text("NOTE: The cost assumes a can of paint costs $10 and can cover 100 square feet");
+                }
+                updateView();
+            });
+            
+            $(document).on("click",".job",function() 
+            {
+                model.selected = $(this).attr("id");
+                updateView();
+            });
+            
+            $('#btnDelete').click(function() 
+            {
+                if (model.selected > -1)
+                {
+                    $('#confirm').modal('show');
+                }
+            });
+
+            $('#yes').click(function() 
+            {
+                for (var i in model.jobs)
+                {
+                    if (model.jobs[i].id == model.selected)
+                    {
+                        model.jobs.splice(i, 1);
+                        model.selected = -1;
+                        break;
+                    }
+                }
+                $('#confirm').modal('hide');
+                updateView();
+            });
+            
+            // run...
+            initializeModel();
+            updateView();
+        });
+        
+        </script>
+    </body>
+</html>
